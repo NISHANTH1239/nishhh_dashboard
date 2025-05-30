@@ -1,0 +1,393 @@
+/* Base styles */
+body {
+  background-color: #0f0f0f;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+  max-width: 700px;
+  margin: auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #00ffd5;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #00ffd5;
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #00ffd5;
+  border-bottom: 2px solid #00ffd5;
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+#current-date {
+  color: #aaa;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+button#theme-toggle {
+  background: #00ffd5;
+  border: none;
+  color: black;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  transition: background 0.3s;
+}
+
+button#theme-toggle:hover {
+  background: #00bba3;
+}
+
+.panel {
+  background-color: #1b1b1b;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 10px #00ffd5;
+  transition: box-shadow 0.3s;
+}
+
+.panel:hover {
+  box-shadow: 0 0 20px #00ffd5;
+}
+
+/* Sub-panels for PR and Goals */
+.sub-panel {
+  background-color: #252525;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: inset 0 0 5px rgba(0, 255, 213, 0.5);
+}
+
+.sub-panel:last-child {
+  margin-bottom: 0;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+form input, form select {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #222;
+  color: white;
+  font-size: 1rem;
+  flex-grow: 1;
+  min-width: 120px;
+}
+
+form button {
+  padding: 0.5rem 1rem;
+  background-color: #00ffd5;
+  border: none;
+  color: black;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  flex-grow: 0;
+  min-width: 80px;
+  transition: background-color 0.3s;
+}
+
+form button:hover {
+  background-color: #00bba3;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+  text-align: left;
+  max-height: 300px; /* Limit height for scrollable lists */
+  overflow-y: auto;
+  border-top: 1px solid #333;
+  padding-top: 0.5rem;
+}
+
+ul li {
+  padding: 0.6rem;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+ul li.completed { /* For study tasks */
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+ul li:hover {
+  background-color: #252525;
+}
+
+ul li span.delete-btn {
+  margin-left: 1rem;
+  cursor: pointer;
+  color: #ff4c4c;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+ul li span.edit-btn {
+  margin-left: 0.5rem;
+  cursor: pointer;
+  color: #00ffd5;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+ul li span.update-progress-btn { /* New for goals (removed now as progress is automatic) */
+  margin-right: 0.5rem;
+  cursor: pointer;
+  color: #00aaff;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+#workout-stats, #study-stats {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* Progress Bar Styles */
+.progress-bar-container {
+  width: 100%;
+  background-color: #444;
+  border-radius: 0.5rem;
+  height: 1.2rem;
+  overflow: hidden;
+  margin-top: 0.5rem;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #00ffd5;
+  width: 0%; /* Controlled by JS */
+  border-radius: 0.5rem;
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: black;
+  font-weight: bold;
+  font-size: 0.8rem;
+  text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+
+/* Light mode */
+body.light-mode {
+  background-color: #f0f0f0;
+  color: #222;
+}
+
+body.light-mode .panel {
+  background-color: #fff;
+  box-shadow: 0 0 10px #00aabb;
+  color: #222;
+}
+
+body.light-mode .sub-panel {
+  background-color: #e0e0e0;
+  box-shadow: inset 0 0 5px rgba(0, 170, 187, 0.5);
+}
+
+body.light-mode form input,
+body.light-mode form select {
+  background-color: #ddd;
+  color: #222;
+  border: 1px solid #ccc;
+}
+
+body.light-mode ul li:hover {
+  background-color: #eee;
+}
+
+body.light-mode button#theme-toggle {
+  background: #008877;
+  color: white;
+}
+
+body.light-mode form button {
+  background-color: #008877;
+  color: white;
+}
+
+body.light-mode form button:hover {
+  background-color: #006644;
+}
+
+body.light-mode .progress-bar-container {
+  background-color: #ccc;
+}
+
+body.light-mode .progress-bar {
+  background-color: #008877;
+}
+
+body.light-mode .progress-text {
+  color: white;
+  text-shadow: 0 0 2px rgba(255,255,255,0.5);
+}
+
+/* Custom Modal Styles (for alert/confirm/prompt replacements) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #1b1b1b;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 20px #00ffd5;
+  text-align: center;
+  max-width: 90%;
+  width: 400px;
+  color: #fff;
+}
+
+.modal-content p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.modal-content input {
+  width: calc(100% - 1rem);
+  padding: 0.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #00ffd5;
+  border-radius: 0.5rem;
+  background-color: #222;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.modal-buttons button {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#modal-confirm-btn, #modal-submit-btn, #modal-ok-btn {
+  background-color: #00ffd5;
+  color: black;
+}
+
+#modal-confirm-btn:hover, #modal-submit-btn:hover, #modal-ok-btn:hover {
+  background-color: #00bba3;
+}
+
+#modal-cancel-btn {
+  background-color: #444;
+  color: white;
+}
+
+#modal-cancel-btn:hover {
+  background-color: #666;
+}
+
+/* Light mode for modals */
+body.light-mode .modal-content {
+  background-color: #fff;
+  box-shadow: 0 0 20px #00aabb;
+  color: #222;
+}
+
+body.light-mode .modal-content input {
+  background-color: #ddd;
+  color: #222;
+  border: 1px solid #008877;
+}
+
+body.light-mode #modal-confirm-btn, body.light-mode #modal-submit-btn, body.light-mode #modal-ok-btn {
+  background-color: #008877;
+  color: white;
+}
+
+body.light-mode #modal-confirm-btn:hover, body.light-mode #modal-submit-btn:hover, body.light-mode #modal-ok-btn:hover {
+  background-color: #006644;
+}
+
+body.light-mode #modal-cancel-btn {
+  background-color: #ccc;
+  color: #222;
+}
+
+body.light-mode #modal-cancel-btn:hover {
+  background-color: #bbb;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -9,10 +9,38 @@ body {
 }
 
 .container {
-  max-width: 700px;
+  max-width: 800px;
   margin: auto;
   padding: 2rem;
   text-align: center;
+}
+
+/* Dashboard summary boxes */
+.dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-box {
+  flex: 1 1 150px;
+  background-color: #1b1b1b;
+  color: #00ffd5;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 10px #00ffd5;
+  text-align: center;
+}
+
+.dashboard-box h4 {
+  margin: 0 0 0.5rem 0;
+}
+
+.dashboard-box p {
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
 h1 {
@@ -73,7 +101,6 @@ button#theme-toggle:hover {
   box-shadow: 0 0 20px #00ffd5;
 }
 
-/* Sub-panels for PR and Goals */
 .sub-panel {
   background-color: #252525;
   padding: 1rem;
@@ -105,6 +132,10 @@ form input, form select {
   min-width: 120px;
 }
 
+input[type="number"] {
+  step: 0.5;
+}
+
 form button {
   padding: 0.5rem 1rem;
   background-color: #00ffd5;
@@ -127,7 +158,7 @@ ul {
   padding: 0;
   margin-top: 1rem;
   text-align: left;
-  max-height: 300px; /* Limit height for scrollable lists */
+  max-height: 300px;
   overflow-y: auto;
   border-top: 1px solid #333;
   padding-top: 0.5rem;
@@ -143,7 +174,7 @@ ul li {
   cursor: pointer;
 }
 
-ul li.completed { /* For study tasks */
+ul li.completed {
   text-decoration: line-through;
   opacity: 0.7;
 }
@@ -168,21 +199,12 @@ ul li span.edit-btn {
   flex-shrink: 0;
 }
 
-ul li span.update-progress-btn { /* New for goals (removed now as progress is automatic) */
-  margin-right: 0.5rem;
-  cursor: pointer;
-  color: #00aaff;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
 #workout-stats, #study-stats {
   margin-top: 1rem;
   font-size: 1.1rem;
   font-weight: bold;
 }
 
-/* Progress Bar Styles */
 .progress-bar-container {
   width: 100%;
   background-color: #444;
@@ -196,7 +218,7 @@ ul li span.update-progress-btn { /* New for goals (removed now as progress is au
 .progress-bar {
   height: 100%;
   background-color: #00ffd5;
-  width: 0%; /* Controlled by JS */
+  width: 0%;
   border-radius: 0.5rem;
   transition: width 0.5s ease-in-out;
 }
@@ -211,7 +233,6 @@ ul li span.update-progress-btn { /* New for goals (removed now as progress is au
   font-size: 0.8rem;
   text-shadow: 0 0 2px rgba(0,0,0,0.5);
 }
-
 
 /* Light mode */
 body.light-mode {
@@ -268,7 +289,7 @@ body.light-mode .progress-text {
   text-shadow: 0 0 2px rgba(255,255,255,0.5);
 }
 
-/* Custom Modal Styles (for alert/confirm/prompt replacements) */
+/* Custom Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -280,6 +301,7 @@ body.light-mode .progress-text {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal-content {
@@ -355,12 +377,16 @@ body.light-mode .modal-content input {
   border: 1px solid #008877;
 }
 
-body.light-mode #modal-confirm-btn, body.light-mode #modal-submit-btn, body.light-mode #modal-ok-btn {
+body.light-mode #modal-confirm-btn,
+body.light-mode #modal-submit-btn,
+body.light-mode #modal-ok-btn {
   background-color: #008877;
   color: white;
 }
 
-body.light-mode #modal-confirm-btn:hover, body.light-mode #modal-submit-btn:hover, body.light-mode #modal-ok-btn:hover {
+body.light-mode #modal-confirm-btn:hover,
+body.light-mode #modal-submit-btn:hover,
+body.light-mode #modal-ok-btn:hover {
   background-color: #006644;
 }
 
@@ -371,6 +397,16 @@ body.light-mode #modal-cancel-btn {
 
 body.light-mode #modal-cancel-btn:hover {
   background-color: #bbb;
+}
+
+/* Modal animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 

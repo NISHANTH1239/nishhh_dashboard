@@ -2,25 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mind & Muscle</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-PJ2d/pP1RtHdFYxN6vOhH0mF4N7VFlpZw4Nz1bXQEvFiYF3y1+j9l8zKJm7Jz7q6aNwU8qWQEtSRO7lF5fnO6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
   <div class="container">
-    <h1>🧠 MIND & MUSCLE 💪</h1>
-    <p id="current-date"></p>
+    <header>
+      <h1>🧠 MIND & MUSCLE 💪</h1>
+      <p id="current-date"></p>
+      <button id="theme-toggle">Toggle Dark/Light Mode</button>
+    </header>
 
-    <button id="theme-toggle">Toggle Dark/Light Mode</button>
+    <section class="dashboard">
+      <h2>📊 Dashboard</h2>
+      <div id="summary-stats"></div>
+    </section>
 
-    <div class="panel muscle">
+    <section class="panel muscle">
       <h2>🏋️ Muscle Zone</h2>
 
       <div class="sub-panel pr-zone">
         <h3>Personal Records (PRs)</h3>
         <form id="pr-form">
           <input type="text" id="pr-exercise" placeholder="Exercise (e.g., Deadlift)" required />
-          <input type="number" id="pr-weight" placeholder="Weight (kg)" min="0" required />
+          <input type="number" id="pr-weight" placeholder="Weight (kg)" min="0" step="0.5" required />
           <input type="date" id="pr-date" />
           <button type="submit">Add PR</button>
         </form>
@@ -32,15 +39,15 @@
         <form id="goal-form">
           <input type="text" id="goal-name" placeholder="Goal Name (e.g., Squat 100kg)" required />
           <input type="text" id="goal-exercise" placeholder="Associated Exercise (e.g., Squat)" required />
-          <input type="number" id="goal-target" placeholder="Target Weight/Value" min="0" required />
+          <input type="number" id="goal-target" placeholder="Target Weight/Value" min="0" step="0.5" required />
           <input type="date" id="goal-due-date" required />
           <button type="submit">Set Goal</button>
         </form>
         <ul id="goal-list"></ul>
       </div>
-    </div>
+    </section>
 
-    <div class="panel mind">
+    <section class="panel mind">
       <h2>🧠 Mind Zone</h2>
       <form id="study-form">
         <input type="text" id="topic-name" placeholder="Add topic (e.g., Blood Relations)" required />
@@ -60,7 +67,7 @@
         <button type="submit">Add Topic</button>
       </form>
 
-      <div>
+      <div class="filters">
         <label>Filter by Subject: </label>
         <select id="study-filter-subject">
           <option value="All" selected>All</option>
@@ -86,7 +93,7 @@
 
       <ul id="study-list"></ul>
       <div id="study-stats"></div>
-    </div>
+    </section>
   </div>
 
   <script src="script.js"></script>

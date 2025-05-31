@@ -2,25 +2,23 @@
 const date = new Date().toDateString();
 document.getElementById("current-date").textContent = date;
 
-// DARK/LIGHT MODE TOGGLE
+// Toggle dark/light mode
 const themeToggleBtn = document.getElementById("theme-toggle");
 themeToggleBtn.addEventListener("click", () => {
   document.body.classList.toggle("light-mode");
 });
 
-// --- Helper Functions for Local Storage ---
-// Safely parse JSON from localStorage, returning an empty array if invalid
+// ========== LOCAL STORAGE HELPERS ==========
 function getFromLocalStorage(key) {
   try {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   } catch (e) {
     console.error(`Error parsing data from localStorage for key "${key}":`, e);
-    return []; // Return empty array on error to prevent crashing
+    return [];
   }
 }
 
-// Safely save data to localStorage
 function saveToLocalStorage(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
@@ -29,16 +27,41 @@ function saveToLocalStorage(key, data) {
   }
 }
 
-// ----- MUSCLE ZONE - PERSONAL RECORDS (PRs) -----
+// ========== DASHBOARD ==========
+
+const dashboard = document.createElement("div");
+dashboard.className = "dashboard";
+dashboard.innerHTML = `
+  <div class="dashboard-box" id="dash-prs">
+    <h4>Personal Records</h4>
+    <p>0</p>
+  </div>
+  <div class="dashboard-box" id="dash-goals">
+    <h4>Fitness Goals</h4>
+    <p>0</p>
+  </div>
+  <div class="dashboard-box" id="dash-topics">
+    <h4>Study Topics</h4>
+    <p>0</p>
+  </div>
+`;
+document.querySelector(".container").insertBefore(dashboard, document.querySelector(".panel"));
+
+function updateDashboard() {
+  document.querySelector("#dash-prs p").textContent = prs.length;
+  document.querySelector("#dash-goals p").textContent = goals.length;
+  const total = studyTopics.length;
+  const completed = studyTopics.filter(t => t.isCompleted).length;
+  document.querySelector("#dash-topics p").textContent = `${completed}/${total}`;
+}
+
+// ========== MUSCLE ZONE - PRs ==========
 const prForm = document.getElementById("pr-form");
 const prList = document.getElementById("pr-list");
-
-// Load PRs securely
 let prs = getFromLocalStorage("prs");
 
-// Function to render PRs on the page
 function renderPRs() {
-  prList.innerHTML = ""; // Clear existing list
+  prList.innerHTML = "";
   prs.forEach((pr, index) => {
     const li = document.createElement("li");
     const prDateDisplay = pr.date ? ` on ${pr.date}` : '';
@@ -52,128 +75,118 @@ function renderPRs() {
       </div>
     `;
 
-    // Edit handler for PRs (to update the PR details)
     li.querySelector(".edit-btn").addEventListener("click", () => {
       showPromptModal("Update PR Weight (kg):", pr.weight, (newWeight) => {
         const numNewWeight = Number(newWeight);
         if (!isNaN(numNewWeight) && numNewWeight >= 0) {
           showPromptModal("Update PR Date (YYYY-MM-DD, optional):", pr.date || '', (newDate) => {
-            if (newDate === '' || newDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            if (newDate === '' || /^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
               prs[index].weight = numNewWeight;
               prs[index].date = newDate;
               saveToLocalStorage("prs", prs);
               renderPRs();
               updateGoalProgressFromPRs();
+              updateDashboard();
               showInfoModal("PR updated successfully!");
             } else {
-              showInfoModal("Please enter a valid date in Jamboree-MM-DD format or leave it empty.");
+              showInfoModal("Please enter a valid date.");
             }
           });
         } else {
-          showInfoModal("Please enter a valid number for PR weight.");
+          showInfoModal("Invalid weight.");
         }
       });
     });
 
-    // Delete handler for PRs
     li.querySelector(".delete-btn").addEventListener("click", () => {
-      showConfirmationModal("Delete this Personal Record?", () => {
+      showConfirmationModal("Delete this PR?", () => {
         prs.splice(index, 1);
         saveToLocalStorage("prs", prs);
         renderPRs();
         updateGoalProgressFromPRs();
+        updateDashboard();
       });
     });
+
     prList.appendChild(li);
   });
 }
 
-// Function to find the highest PR for a given exercise
 function getHighestPRForExercise(exercise) {
-  let highestWeight = 0;
+  let highest = 0;
   prs.forEach(pr => {
-    if (pr.exercise.toLowerCase() === exercise.toLowerCase() && pr.weight > highestWeight) {
-      highestWeight = pr.weight;
+    if (pr.exercise.toLowerCase() === exercise.toLowerCase() && pr.weight > highest) {
+      highest = pr.weight;
     }
   });
-  return highestWeight;
+  return highest;
 }
 
-// Function to update goal progress based on latest PRs
 function updateGoalProgressFromPRs() {
-  let goalsChanged = false;
+  let changed = false;
   goals.forEach(goal => {
-    const currentHighestPR = getHighestPRForExercise(goal.exercise);
-    if (goal.current !== currentHighestPR) {
-      goal.current = currentHighestPR;
-      goalsChanged = true;
+    const current = getHighestPRForExercise(goal.exercise);
+    if (goal.current !== current) {
+      goal.current = current;
+      changed = true;
     }
   });
-  if (goalsChanged) {
+  if (changed) {
     saveToLocalStorage("goals", goals);
     renderGoals();
   }
 }
 
-// Function to handle adding a new PR
 function addPRHandler(e) {
   e.preventDefault();
   const exercise = document.getElementById("pr-exercise").value.trim();
-  const weight = document.getElementById("pr-weight").value;
+  const weight = parseFloat(document.getElementById("pr-weight").value);
   let date = document.getElementById("pr-date").value;
 
-  if (!exercise || !weight) {
-    showInfoModal("Please fill in the Exercise and Weight fields for the PR.");
+  if (!exercise || isNaN(weight)) {
+    showInfoModal("Please fill in valid exercise and weight.");
     return;
   }
 
-  if (!date) {
-    date = '';
-  }
+  if (!date) date = '';
 
   const exactDuplicate = prs.some(p =>
     p.exercise.toLowerCase() === exercise.toLowerCase() &&
-    p.weight === Number(weight) &&
+    p.weight === weight &&
     p.date === date
   );
 
   if (exactDuplicate) {
-    showInfoModal("A PR with the exact same exercise, weight, and date already exists.");
+    showInfoModal("This PR already exists.");
     return;
   }
 
   const existingBetterPR = prs.find(p =>
     p.exercise.toLowerCase() === exercise.toLowerCase() &&
-    p.weight > Number(weight)
+    p.weight > weight
   );
 
-  if (existingBetterPR) {
-    showConfirmationModal(`You already have a PR for "${exercise}" of ${existingBetterPR.weight}kg. Do you still want to add this ${weight}kg PR?`, () => {
-      prs.push({ exercise, weight: Number(weight), date });
-      saveToLocalStorage("prs", prs);
-      renderPRs();
-      updateGoalProgressFromPRs();
-      prForm.reset();
-      showInfoModal("New PR entry added.");
-    }, () => {
-      showInfoModal("PR not added.");
-      prForm.reset();
-    });
-  } else {
-    prs.push({ exercise, weight: Number(weight), date });
+  const addPR = () => {
+    prs.push({ exercise, weight, date });
     saveToLocalStorage("prs", prs);
     renderPRs();
     updateGoalProgressFromPRs();
+    updateDashboard();
     prForm.reset();
-    showInfoModal("New PR added successfully!");
+    showInfoModal("PR added!");
+  };
+
+  if (existingBetterPR) {
+    showConfirmationModal(`You already have a higher PR (${existingBetterPR.weight}kg). Still add ${weight}kg?`, addPR);
+  } else {
+    addPR();
   }
 }
 
 prForm.addEventListener("submit", addPRHandler);
 renderPRs();
 
-
-// ----- MUSCLE ZONE - FITNESS GOALS -----
+// ========== MUSCLE ZONE - GOALS ==========
 const goalForm = document.getElementById("goal-form");
 const goalList = document.getElementById("goal-list");
 const goalNameInput = document.getElementById("goal-name");
@@ -184,8 +197,7 @@ const goalDueDateInput = document.getElementById("goal-due-date");
 let goals = getFromLocalStorage("goals");
 
 function calculateProgress(current, target) {
-  if (target <= 0) return 0;
-  return Math.min(100, (current / target) * 100);
+  return target <= 0 ? 0 : Math.min(100, (current / target) * 100);
 }
 
 function renderGoals() {
@@ -204,8 +216,8 @@ function renderGoals() {
         </div>
       </div>
       <div>
-        <span class="edit-btn" title="Edit Goal Details">✏️</span>
-        <span class="delete-btn" title="Delete Goal">❌</span>
+        <span class="edit-btn">✏️</span>
+        <span class="delete-btn">❌</span>
       </div>
     `;
 
@@ -219,7 +231,7 @@ function renderGoals() {
       goalForm.dataset.editingIndex = index;
 
       goalForm.removeEventListener("submit", addGoalHandler);
-      goalForm.addEventListener("submit", updateGoalDetailsHandler);
+      goalForm.addEventListener("submit", updateGoalHandler);
     });
 
     li.querySelector(".delete-btn").addEventListener("click", () => {
@@ -227,129 +239,129 @@ function renderGoals() {
         goals.splice(index, 1);
         saveToLocalStorage("goals", goals);
         renderGoals();
+        updateDashboard();
       });
     });
+
     goalList.appendChild(li);
   });
 }
 
-function updateGoalDetailsHandler(e) {
+function updateGoalHandler(e) {
   e.preventDefault();
   const index = parseInt(goalForm.dataset.editingIndex);
   const name = goalNameInput.value.trim();
   const exercise = goalExerciseInput.value.trim();
-  const target = Number(goalTargetInput.value);
+  const target = parseFloat(goalTargetInput.value);
   const dueDate = goalDueDateInput.value;
 
-  if (!name || !exercise || !target || !dueDate) {
-    showInfoModal("Please fill in all Goal fields.");
+  if (!name || !exercise || isNaN(target) || !dueDate) {
+    showInfoModal("Please fill all fields.");
     return;
   }
 
-  goals[index].name = name;
-  goals[index].exercise = exercise;
-  goals[index].target = target;
-  goals[index].dueDate = dueDate;
-  goals[index].current = getHighestPRForExercise(exercise);
+  goals[index] = {
+    name,
+    exercise,
+    target,
+    current: getHighestPRForExercise(exercise),
+    dueDate
+  };
 
   saveToLocalStorage("goals", goals);
   renderGoals();
+  updateDashboard();
   goalForm.reset();
   goalForm.querySelector("button[type=submit]").textContent = "Set Goal";
-
-  goalForm.removeEventListener("submit", updateGoalDetailsHandler);
+  goalForm.removeEventListener("submit", updateGoalHandler);
   goalForm.addEventListener("submit", addGoalHandler);
   delete goalForm.dataset.editingIndex;
-  showInfoModal("Goal details updated successfully!");
+  showInfoModal("Goal updated!");
 }
 
 function addGoalHandler(e) {
   e.preventDefault();
   const name = goalNameInput.value.trim();
   const exercise = goalExerciseInput.value.trim();
-  const target = Number(goalTargetInput.value);
+  const target = parseFloat(goalTargetInput.value);
   const dueDate = goalDueDateInput.value;
 
-  if (!name || !exercise || !target || !dueDate) {
-    showInfoModal("Please fill in all Goal fields.");
+  if (!name || !exercise || isNaN(target) || !dueDate) {
+    showInfoModal("Please fill all fields.");
     return;
   }
 
-  const initialCurrent = getHighestPRForExercise(exercise);
+  goals.push({
+    name,
+    exercise,
+    target,
+    current: getHighestPRForExercise(exercise),
+    dueDate
+  });
 
-  goals.push({ name, exercise, target, current: initialCurrent, dueDate });
   saveToLocalStorage("goals", goals);
   renderGoals();
+  updateDashboard();
   goalForm.reset();
-  showInfoModal("New goal set successfully!");
+  showInfoModal("Goal added!");
 }
 
 goalForm.addEventListener("submit", addGoalHandler);
 renderGoals();
 
-
-// ----- MIND ZONE - TOPIC TRACKER (Refactored) -----
+// ========== MIND ZONE - STUDY ==========
 const studyForm = document.getElementById("study-form");
 const studyList = document.getElementById("study-list");
-const topicNameInput = document.getElementById("topic-name"); // Renamed ID
-const studySubjectInput = document.getElementById("study-subject"); // Renamed ID
+const topicNameInput = document.getElementById("topic-name");
+const studySubjectInput = document.getElementById("study-subject");
 const studyPriorityInput = document.getElementById("study-priority");
-
-const studyFilterSubject = document.getElementById("study-filter-subject"); // Renamed ID
+const studyFilterSubject = document.getElementById("study-filter-subject");
 const studyFilterPriority = document.getElementById("study-filter-priority");
-const studyFilterCompletion = document.getElementById("study-filter-completion"); // New filter
+const studyFilterCompletion = document.getElementById("study-filter-completion");
 
-let studyTopics = getFromLocalStorage("studyTopics"); // Renamed array
+let studyTopics = getFromLocalStorage("studyTopics");
 
 function saveStudyTopics() {
   saveToLocalStorage("studyTopics", studyTopics);
 }
 
-function renderStudyTopics(filterSubj = "All", filterPrio = "All", filterComp = "All") {
+function renderStudyTopics() {
   studyList.innerHTML = "";
+  const subj = studyFilterSubject.value;
+  const prio = studyFilterPriority.value;
+  const comp = studyFilterCompletion.value;
 
   let filtered = studyTopics;
-
-  if (filterSubj !== "All") {
-    filtered = filtered.filter(t => t.subject === filterSubj);
-  }
-  if (filterPrio !== "All") {
-    filtered = filtered.filter(t => t.priority === filterPrio);
-  }
-  if (filterComp !== "All") {
-    if (filterComp === "Completed") {
-      filtered = filtered.filter(t => t.isCompleted);
-    } else if (filterComp === "Pending") {
-      filtered = filtered.filter(t => !t.isCompleted);
-    }
+  if (subj !== "All") filtered = filtered.filter(t => t.subject === subj);
+  if (prio !== "All") filtered = filtered.filter(t => t.priority === prio);
+  if (comp !== "All") {
+    filtered = filtered.filter(t => comp === "Completed" ? t.isCompleted : !t.isCompleted);
   }
 
   filtered.forEach((topic, index) => {
     const li = document.createElement("li");
-    li.classList.toggle("completed", topic.isCompleted); // Apply 'completed' class
-
-    const completionDateDisplay = topic.dateCompleted ? ` (Completed: ${topic.dateCompleted})` : '';
+    li.classList.toggle("completed", topic.isCompleted);
+    const completeDate = topic.dateCompleted ? ` (Completed: ${topic.dateCompleted})` : '';
 
     li.innerHTML = `
       <div>
         <input type="checkbox" class="topic-completed-checkbox" ${topic.isCompleted ? 'checked' : ''}>
         <strong>${topic.topicName}</strong> (${topic.subject}) - Priority: ${topic.priority}<br>
-        <small>Added: ${topic.dateAdded}${completionDateDisplay}</small>
+        <small>Added: ${topic.dateAdded}${completeDate}</small>
       </div>
       <div>
-        <span class="edit-btn" title="Edit Topic">✏️</span>
-        <span class="delete-btn" title="Delete Topic">❌</span>
+        <span class="edit-btn">✏️</span>
+        <span class="delete-btn">❌</span>
       </div>
     `;
 
-    // Event listener for completion checkbox
     li.querySelector(".topic-completed-checkbox").addEventListener("change", (e) => {
       topic.isCompleted = e.target.checked;
       topic.dateCompleted = topic.isCompleted ? new Date().toISOString().split('T')[0] : null;
       saveStudyTopics();
-      renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
+      renderStudyTopics();
       updateStudyStats();
-      showInfoModal(`Topic "${topic.topicName}" marked as ${topic.isCompleted ? 'completed' : 'pending'}.`);
+      updateDashboard();
     });
 
     li.querySelector(".edit-btn").addEventListener("click", () => {
@@ -365,63 +377,33 @@ function renderStudyTopics(filterSubj = "All", filterPrio = "All", filterComp = 
     });
 
     li.querySelector(".delete-btn").addEventListener("click", () => {
-      showConfirmationModal("Delete this study topic?", () => {
+      showConfirmationModal("Delete this topic?", () => {
         studyTopics.splice(index, 1);
         saveStudyTopics();
-        renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
+        renderStudyTopics();
         updateStudyStats();
+        updateDashboard();
       });
     });
 
     studyList.appendChild(li);
   });
 
-  updateStudyStats(filtered);
+  updateDashboard();
 }
 
-function updateStudyStats(filteredList = studyTopics) {
-  const totalTopics = filteredList.length;
-  const completedTopics = filteredList.filter(t => t.isCompleted).length;
-  const pendingTopics = totalTopics - completedTopics;
-  const highPriority = filteredList.filter(t => t.priority === "High" && !t.isCompleted).length;
-  const mediumPriority = filteredList.filter(t => t.priority === "Medium" && !t.isCompleted).length;
-  const lowPriority = filteredList.filter(t => t.priority === "Low" && !t.isCompleted).length;
+function updateStudyStats() {
+  const total = studyTopics.length;
+  const completed = studyTopics.filter(t => t.isCompleted).length;
+  const pending = total - completed;
+  const high = studyTopics.filter(t => t.priority === "High" && !t.isCompleted).length;
+  const medium = studyTopics.filter(t => t.priority === "Medium" && !t.isCompleted).length;
+  const low = studyTopics.filter(t => t.priority === "Low" && !t.isCompleted).length;
 
-  studyStats.innerHTML = `
-    Topics: ${totalTopics} | Completed: ${completedTopics} | Pending: ${pendingTopics}<br>
-    Pending by Priority: High: ${highPriority} | Medium: ${mediumPriority} | Low: ${lowPriority}
+  document.getElementById("study-stats").innerHTML = `
+    Topics: ${total} | Completed: ${completed} | Pending: ${pending}<br>
+    Pending by Priority: High: ${high} | Medium: ${medium} | Low: ${low}
   `;
-}
-
-function updateStudyTopicHandler(e) {
-  e.preventDefault();
-  const index = parseInt(studyForm.dataset.editingIndex);
-  const topicName = topicNameInput.value.trim();
-  const subject = studySubjectInput.value;
-  const priority = studyPriorityInput.value;
-
-  if (!topicName || !subject || !priority) {
-    showInfoModal("Please fill in all Topic fields.");
-    return;
-  }
-
-  // Preserve isCompleted and dateAdded/Completed if already set
-  studyTopics[index].topicName = topicName;
-  studyTopics[index].subject = subject;
-  studyTopics[index].priority = priority;
-  // If subject changes, and it's completed, keep the completion status, otherwise re-evaluate based on new subject if needed
-  // For simplicity, we just update the properties. Completion status is handled by checkbox.
-
-  saveStudyTopics();
-  renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
-  updateStudyStats();
-  studyForm.reset();
-  studyForm.querySelector("button[type=submit]").textContent = "Add Topic";
-
-  studyForm.removeEventListener("submit", updateStudyTopicHandler);
-  studyForm.addEventListener("submit", addStudyTopicHandler);
-  delete studyForm.dataset.editingIndex;
-  showInfoModal("Study topic updated successfully!");
 }
 
 function addStudyTopicHandler(e) {
@@ -435,44 +417,51 @@ function addStudyTopicHandler(e) {
     return;
   }
 
-  const dateAdded = new Date().toISOString().split('T')[0]; // Current date for 'added'
-
+  const dateAdded = new Date().toISOString().split('T')[0];
   studyTopics.push({
     topicName,
     subject,
     priority,
     dateAdded,
-    dateCompleted: null, // Initially not completed
-    isCompleted: false // Initially not completed
+    dateCompleted: null,
+    isCompleted: false
   });
+
   saveStudyTopics();
-  renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
+  renderStudyTopics();
   updateStudyStats();
   studyForm.reset();
-  showInfoModal("New study topic added successfully!");
+  showInfoModal("Topic added!");
+}
+
+function updateStudyTopicHandler(e) {
+  e.preventDefault();
+  const index = parseInt(studyForm.dataset.editingIndex);
+  studyTopics[index].topicName = topicNameInput.value.trim();
+  studyTopics[index].subject = studySubjectInput.value;
+  studyTopics[index].priority = studyPriorityInput.value;
+
+  saveStudyTopics();
+  renderStudyTopics();
+  updateStudyStats();
+  studyForm.reset();
+  studyForm.querySelector("button[type=submit]").textContent = "Add Topic";
+  studyForm.removeEventListener("submit", updateStudyTopicHandler);
+  studyForm.addEventListener("submit", addStudyTopicHandler);
+  delete studyForm.dataset.editingIndex;
+  showInfoModal("Topic updated!");
 }
 
 studyForm.addEventListener("submit", addStudyTopicHandler);
-
-// Filter event listeners
-studyFilterSubject.addEventListener("change", () => {
-  renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
-});
-studyFilterPriority.addEventListener("change", () => {
-  renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
-});
-studyFilterCompletion.addEventListener("change", () => {
-  renderStudyTopics(studyFilterSubject.value, studyFilterPriority.value, studyFilterCompletion.value);
-});
-
-// Initial render
+studyFilterSubject.addEventListener("change", renderStudyTopics);
+studyFilterPriority.addEventListener("change", renderStudyTopics);
+studyFilterCompletion.addEventListener("change", renderStudyTopics);
 renderStudyTopics();
 updateStudyStats();
 
-// ----- Custom Modal Functions (Unchanged) -----
-
+// ========== MODALS ==========
 function showConfirmationModal(message, onConfirm, onCancel = () => {}) {
-  const modalHtml = `
+  const html = `
     <div id="custom-modal" class="modal-overlay">
       <div class="modal-content">
         <p>${message}</p>
@@ -481,26 +470,21 @@ function showConfirmationModal(message, onConfirm, onCancel = () => {}) {
           <button id="modal-cancel-btn">Cancel</button>
         </div>
       </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-  const modal = document.getElementById('custom-modal');
-  const confirmBtn = document.getElementById('modal-confirm-btn');
-  const cancelBtn = document.getElementById('modal-cancel-btn');
-
-  confirmBtn.onclick = () => {
+    </div>`;
+  document.body.insertAdjacentHTML("beforeend", html);
+  const modal = document.getElementById("custom-modal");
+  modal.querySelector("#modal-confirm-btn").onclick = () => {
     onConfirm();
     modal.remove();
   };
-  cancelBtn.onclick = () => {
+  modal.querySelector("#modal-cancel-btn").onclick = () => {
     onCancel();
     modal.remove();
   };
 }
 
 function showInfoModal(message) {
-  const modalHtml = `
+  const html = `
     <div id="custom-modal" class="modal-overlay">
       <div class="modal-content">
         <p>${message}</p>
@@ -508,20 +492,15 @@ function showInfoModal(message) {
           <button id="modal-ok-btn">OK</button>
         </div>
       </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-  const modal = document.getElementById('custom-modal');
-  const okBtn = document.getElementById('modal-ok-btn');
-
-  okBtn.onclick = () => {
-    modal.remove();
+    </div>`;
+  document.body.insertAdjacentHTML("beforeend", html);
+  document.getElementById("modal-ok-btn").onclick = () => {
+    document.getElementById("custom-modal").remove();
   };
 }
 
 function showPromptModal(message, defaultValue, onInput) {
-  const modalHtml = `
+  const html = `
     <div id="custom-modal" class="modal-overlay">
       <div class="modal-content">
         <p>${message}</p>
@@ -531,23 +510,15 @@ function showPromptModal(message, defaultValue, onInput) {
           <button id="modal-cancel-btn">Cancel</button>
         </div>
       </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-  const modal = document.getElementById('custom-modal');
-  const inputField = document.getElementById('modal-input');
-  const submitBtn = document.getElementById('modal-submit-btn');
-  const cancelBtn = document.getElementById('modal-cancel-btn');
-
-  submitBtn.onclick = () => {
-    onInput(inputField.value);
+    </div>`;
+  document.body.insertAdjacentHTML("beforeend", html);
+  const modal = document.getElementById("custom-modal");
+  modal.querySelector("#modal-submit-btn").onclick = () => {
+    onInput(modal.querySelector("#modal-input").value);
     modal.remove();
   };
-  cancelBtn.onclick = () => { 
-    modal.remove();
-  };
-  inputField.focus();
+  modal.querySelector("#modal-cancel-btn").onclick = () => modal.remove();
+  modal.querySelector("#modal-input").focus();
 }
 
 
